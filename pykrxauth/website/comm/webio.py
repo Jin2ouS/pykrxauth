@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-import requests
+from .session import get_session
 
 
 class Get:
@@ -11,7 +11,7 @@ class Get:
         }
 
     def read(self, **params):
-        resp = requests.get(self.url, headers=self.headers, params=params)
+        resp = get_session().get(self.url, headers=self.headers, params=params)
         return resp
 
     @property
@@ -30,7 +30,7 @@ class Post:
             self.headers.update(headers)
 
     def read(self, **params):
-        resp = requests.post(self.url, headers=self.headers, data=params)
+        resp = get_session().post(self.url, headers=self.headers, data=params)
         return resp
 
     @property
