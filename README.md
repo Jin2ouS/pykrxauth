@@ -1,10 +1,37 @@
-# PyKrx
+# PyKrxAuth
 
-한국 증권시장(KRX, Naver)에서 주식·채권 데이터를 스크래핑하는 Python 라이브러리입니다.
+[pykrx](https://github.com/sharebook-kr/pykrx)를 fork하여 **KRX 인증 기능**을 추가한 라이브러리입니다.
+
+2026년 2월 27일부터 KRX(한국거래소)가 일부 API에 로그인 인증을 필수로 변경함에 따라, 세션 기반 로그인 기능을 추가했습니다.
+
+## 🔐 pykrx와의 차이점
+
+| 구분 | pykrx | pykrxauth |
+|------|-------|-----------|
+| 인증 | 미지원 | **KRX 로그인 지원** |
+| ETF/ETN/ELW API | ❌ 2026.02.27 이후 사용 불가 | ✅ 로그인 후 사용 가능 |
+| 기타 API | ✅ 정상 | ✅ 정상 |
+
+### 인증이 필요한 API (2026.02.27 이후)
+
+- `get_etf_ticker_list()`
+- `get_etn_ticker_list()`
+- `get_elw_ticker_list()`
+- `get_etf_ohlcv_by_date()`
+- `get_etf_portfolio_deposit_file()`
+- 기타 ETF/ETN/ELW 관련 API
+
+### 인증 없이 사용 가능한 API
+
+- `get_market_ohlcv()` - 주식 OHLCV
+- `get_index_ohlcv()` - 지수 OHLCV
+- Bond API 전체
+- Short Selling API 전체
+- 기타 Stock Market API
 
 ## ☕ 후원하기
 
-프로젝트가 도움이 되셨다면 개발자를 응원해주세요!
+원본 pykrx 프로젝트가 도움이 되셨다면 원작자를 응원해주세요!
 
 [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?logo=github)](https://github.com/sponsors/sharebook-kr)
 
@@ -14,24 +41,91 @@
 * 도의적으로 **무분별한 API 호출을 자제**해 주시기 바랍니다.
 * 제공되는 데이터는 **공식 데이터와 차이가 있을 수 있으며**, 참고용으로만 사용해야 합니다.
 * **투자 손실이나 법적 책임**은 사용자에게 있으며, 상업적 용도 사용 시 데이터 제공처의 약관을 준수해야 합니다.
-* 후원은 데이터에 대한 대가가 아니며, **오픈소스 유지보수를 위한 개발자 응원** 목적으로만 사용됩니다.
+* KRX 계정 정보는 사용자의 책임 하에 관리해야 하며, `.env` 파일은 절대 git에 커밋하지 마세요.
 
 ## 1 환경설정
 
 ### 1.1 Installation
-pykrx는 pip을 사용해서 쉽게 설치할 수 있습니다.
 
-```
-pip install pykrx
-```
-
-pykrx는 증권시장의 주식 정보를 스크래핑 합니다. 모듈의 사용은 import부터 시작합니다.
-```
-from pykrx import stock
-from pykrx import bond
+#### GitHub에서 설치 (권장)
+```bash
+pip install git+https://github.com/Jin2ouS/pykrxauth.git
 ```
 
-### 1.2 개발 환경 설정 (Development environment)
+#### 로컬 개발용 설치
+```bash
+git clone https://github.com/Jin2ouS/pykrxauth.git
+cd pykrxauth
+pip install -e .
+```
+
+### 1.2 KRX 계정 설정
+
+pykrxauth를 사용하려면 [KRX 정보데이터시스템](https://data.krx.co.kr) 계정이 필요합니다.
+
+#### 방법 1: .env 파일 사용 (권장)
+
+프로젝트 루트에 `.env` 파일을 생성합니다:
+```
+KRX_ID=your_krx_id
+KRX_PW=your_krx_password
+```
+
+> ⚠️ `.env` 파일은 `.gitignore`에 포함되어 있어 git에 커밋되지 않습니다.
+
+#### 방법 2: 환경변수 직접 설정
+
+```bash
+# Linux/Mac
+export KRX_ID="your_id"
+export KRX_PW="your_password"
+
+# Windows PowerShell
+$env:KRX_ID="your_id"
+$env:KRX_PW="your_password"
+```
+
+### 1.3 사용 방법
+
+```python
+from pykrxauth import stock, login
+
+# 방법 1: .env 파일 또는 환경변수 사용 (자동 로그인)
+login()
+
+# 방법 2: 직접 로그인
+login("your_id", "your_password")
+
+# 이후 API 사용
+df = stock.get_etf_ticker_list("20260301")
+print(df)
+```
+
+#### 자동 로그인
+
+`.env` 파일에 인증 정보가 설정되어 있으면, API 호출 시 자동으로 로그인을 시도합니다:
+
+```python
+from pykrxauth import stock
+
+# .env에 KRX_ID, KRX_PW가 설정되어 있으면 자동 로그인
+df = stock.get_etf_ticker_list("20260301")  # 첫 요청 시 자동 로그인
+```
+
+### 1.4 기존 pykrx 코드 마이그레이션
+
+기존 pykrx 코드를 pykrxauth로 변경하는 방법:
+
+```python
+# 변경 전 (pykrx)
+from pykrxauth import stock
+
+# 변경 후 (pykrxauth)
+from pykrxauth import stock, login
+login()  # 인증 필요 API 사용 전 로그인
+```
+
+### 1.5 개발 환경 설정 (Development environment)
 
 로컬 개발 및 테스트를 위한 권장 절차입니다. 프로젝트 루트에서 아래 명령을 실행하세요.
 

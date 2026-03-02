@@ -25,7 +25,10 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-pykrx/_version.py
+pykrxauth/_version.py
+
+# Environment variables
+.env
 
 # Testing / Coverage
 .pytest_cache/
